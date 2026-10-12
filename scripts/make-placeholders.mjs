@@ -1,0 +1,408 @@
+// Generates the placeholder "product photos" in public/images.
+// Every image is an illustration of an engraved walnut slice, standing in for
+// a real product photo. To swap one, replace the file in public/images with a
+// photo of the same name, then remove data-placeholder from its <figure> in
+// index.html so the "Placeholder" chip goes away.
+//
+//   npm run placeholders
+
+import sharp from 'sharp';
+import { mkdir } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'images');
+const BURN = '#2B180D';
+const SERIF = 'Times New Roman, Times, serif';
+
+const f = (n) => Number(n.toFixed(2));
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+function rng(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/* ---------- engraving primitives (local units: slice radius = 100) ---------- */
+
+const txt = (s, y, size, o = {}) =>
+  `<text x="${f((o.x ?? 0) + (o.ls ?? 0) / 2)}" y="${y}" text-anchor="middle" font-family="${SERIF}" font-size="${size}"${
+    o.italic ? ' font-style="italic"' : ''
+  }${o.ls ? ` letter-spacing="${o.ls}"` : ''} fill="${BURN}">${esc(s)}</text>`;
+
+function arcText(str, r, size, { step = 8, bottom = false } = {}) {
+  const chars = [...str];
+  const mid = (chars.length - 1) / 2;
+  return chars
+    .map((ch, i) => {
+      const deg = (i - mid) * step;
+      const a = (deg * Math.PI) / 180;
+      const x = r * Math.sin(a);
+      const y = (bottom ? 1 : -1) * r * Math.cos(a);
+      return `<text transform="translate(${f(x)} ${f(y)}) rotate(${f(bottom ? -deg : deg)})" text-anchor="middle" font-family="${SERIF}" font-size="${size}" fill="${BURN}">${esc(ch)}</text>`;
+    })
+    .join('');
+}
+
+const stroke = (d, w = 1.2, extra = '') =>
+  `<path d="${d}" fill="none" stroke="${BURN}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" ${extra}/>`;
+
+const leaf = (x, y, len, w, rot, filled = true) =>
+  `<path transform="translate(${f(x)} ${f(y)}) rotate(${f(rot)})" d="M0 0 Q${f(len / 2)} ${f(-w)} ${f(len)} 0 Q${f(len / 2)} ${f(w)} 0 0Z${
+    filled ? '' : ` M0 0 L${f(len * 0.9)} 0`
+  }" ${filled ? `fill="${BURN}"` : `fill="none" stroke="${BURN}" stroke-width="0.9" stroke-linejoin="round"`}/>`;
+
+const sparkle = (x, y, r) => {
+  const k = f(r * 0.17);
+  return `<path transform="translate(${x} ${y})" d="M0 ${-r} Q${k} ${-k} ${r} 0 Q${k} ${k} 0 ${r} Q${-k} ${k} ${-r} 0 Q${-k} ${-k} 0 ${-r}Z" fill="${BURN}"/>`;
+};
+
+const dot = (x, y, r = 1.1) => `<circle cx="${f(x)}" cy="${f(y)}" r="${r}" fill="${BURN}"/>`;
+
+const heart = (x, y, s) =>
+  `<path transform="translate(${x} ${y}) scale(${s})" d="M0 6 C-11 -2 -5 -10 0 -4 C5 -10 11 -2 0 6Z" fill="${BURN}"/>`;
+
+const pine = (x, y, h) => {
+  const w = h * 0.5;
+  const p = (a, b) => `${f(a)} ${f(b)}`;
+  return `<path transform="translate(${f(x)} ${f(y)})" d="M${p(0, -h)} L${p(w * 0.45, -h * 0.6)} L${p(w * 0.2, -h * 0.6)} L${p(w * 0.72, -h * 0.25)} L${p(w * 0.3, -h * 0.25)} L${p(w, h * 0.12)} L${p(-w, h * 0.12)} L${p(-w * 0.3, -h * 0.25)} L${p(-w * 0.72, -h * 0.25)} L${p(-w * 0.2, -h * 0.6)} L${p(-w * 0.45, -h * 0.6)}Z M${p(-h * 0.06, h * 0.12)} h${f(h * 0.12)} v${f(h * 0.2)} h${f(-h * 0.12)}Z" fill="${BURN}"/>`;
+};
+
+const paw = (x, y, s) =>
+  `<g transform="translate(${x} ${y}) scale(${s})" fill="${BURN}"><path d="M0 2 C-9 2 -13 9 -11 14 C-9 19 -4 17 0 17 C4 17 9 19 11 14 C13 9 9 2 0 2Z"/><ellipse cx="-11.5" cy="-3" rx="3.6" ry="5" transform="rotate(-22 -11.5 -3)"/><ellipse cx="-4.2" cy="-9" rx="3.7" ry="5.4" transform="rotate(-8 -4.2 -9)"/><ellipse cx="4.2" cy="-9" rx="3.7" ry="5.4" transform="rotate(8 4.2 -9)"/><ellipse cx="11.5" cy="-3" rx="3.6" ry="5" transform="rotate(22 11.5 -3)"/></g>`;
+
+// A sprig that follows an arc of radius r from angle a0 to a1 (degrees, clockwise from top).
+function laurel(r, a0, a1, n, len = 9) {
+  const pts = [];
+  let out = '';
+  for (let i = 0; i <= n; i++) {
+    const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+    const x = r * Math.sin(a);
+    const y = -r * Math.cos(a);
+    pts.push([x, y]);
+    if (i > 0) {
+      const dir = (Math.atan2(y - pts[i - 1][1], x - pts[i - 1][0]) * 180) / Math.PI;
+      out += leaf(x, y, len, len * 0.3, dir - 36) + leaf(x, y, len, len * 0.3, dir + 36);
+    }
+  }
+  return out + stroke(`M${pts.map((p) => p.map(f).join(' ')).join(' L')}`, 0.9);
+}
+
+const rule = (y, half = 30) =>
+  stroke(`M${-half} ${y} H-7 M7 ${y} H${half}`, 0.8) +
+  `<path d="M0 ${y - 3.2} L3.2 ${y} L0 ${y + 3.2} L-3.2 ${y}Z" fill="${BURN}"/>`;
+
+const dotRing = (r, n) =>
+  Array.from({ length: n }, (_, i) => {
+    const a = (i / n) * Math.PI * 2;
+    return dot(r * Math.cos(a), r * Math.sin(a), 0.9);
+  }).join('');
+
+/* ---------- the nine designs ---------- */
+
+const designs = {
+  blank: () => '',
+
+  peace: () =>
+    sparkle(0, -50, 13) +
+    stroke('M0 -72 V-67 M0 -33 V-28 M-22 -50 H-17 M17 -50 H22', 0.9) +
+    dot(-30, -38) + dot(31, -62, 0.9) + dot(-24, -66, 0.8) + dot(36, -36, 0.8) +
+    txt('Peace', 6, 46, { italic: true }) +
+    txt('ON EARTH', 30, 13.5, { ls: 5.5 }) +
+    rule(47) +
+    laurel(74, 214, 250, 5, 8) + laurel(74, 146, 110, 5, 8),
+
+  merry: () =>
+    dotRing(79, 56) +
+    pine(0, -34, 26) + sparkle(-24, -44, 5) + sparkle(25, -50, 4) + dot(-34, -26, 0.9) + dot(36, -30, 0.9) +
+    txt('Merry', 14, 44, { italic: true }) +
+    txt('CHRISTMAS', 36, 13.5, { ls: 5 }) +
+    rule(52, 26),
+
+  nativity: () =>
+    sparkle(0, -58, 12) + stroke('M0 -44 V-30', 0.9) +
+    dot(-40, -52, 0.9) + dot(38, -58, 0.9) + dot(-22, -66, 0.8) + dot(54, -34, 0.8) + dot(-56, -30, 0.8) +
+    // stable
+    stroke('M-56 -4 L0 -36 L56 -4', 2) + stroke('M-46 -9 V42 M46 -9 V42', 1.6) + stroke('M-64 42 H64', 1.6) +
+    // Mary, kneeling
+    `<circle cx="-23" cy="6" r="6" fill="${BURN}"/><path d="M-30 12 Q-37 28 -35 42 L-10 42 Q-12 22 -19 12Z" fill="${BURN}"/>` +
+    // Joseph, standing with a staff
+    `<circle cx="25" cy="-3" r="6.4" fill="${BURN}"/><path d="M18 4 Q12 24 12 42 L36 42 Q37 20 32 4Z" fill="${BURN}"/>` +
+    stroke('M41 42 V-10 Q41 -17 35 -15', 1.3) +
+    // manger
+    stroke('M-7 42 L7 28 M7 42 L-7 28', 1.4) + stroke('M-9 27 Q0 34 9 27', 1.6) +
+    `<circle cx="0" cy="22.5" r="3.4" fill="${BURN}"/>` + stroke('M-6 20 A6.5 6.5 0 0 1 6 20', 0.7) +
+    txt('O HOLY NIGHT', 62, 9.5, { ls: 4 }),
+
+  mom: () =>
+    arcText('WORLD’S BEST', 60, 13, { step: 11 }) +
+    txt('Mom', 22, 58, { italic: true }) +
+    heart(0, 40, 0.9) +
+    laurel(72, 205, 252, 6, 8.5) + laurel(72, 155, 108, 6, 8.5),
+
+  dad: () =>
+    arcText('WORLD’S BEST', 60, 13, { step: 11 }) +
+    txt('Dad', 22, 58, { italic: true }) +
+    sparkle(0, 42, 6.5) +
+    `<circle r="78" fill="none" stroke="${BURN}" stroke-width="1.1"/><circle r="74.5" fill="none" stroke="${BURN}" stroke-width="0.5"/>`,
+
+  pets: () =>
+    `<circle r="78" fill="none" stroke="${BURN}" stroke-width="0.9" stroke-dasharray="1 5" stroke-linecap="round"/>` +
+    paw(0, -44, 1.05) +
+    txt('Life is better', 10, 25, { italic: true }) +
+    txt('with pets', 37, 25, { italic: true }) +
+    rule(53, 24),
+
+  vinyl: () => {
+    let out = '';
+    for (let r = 31; r <= 84; r += 2.6) {
+      const gap = Math.abs(r - 49.2) < 1.4 || Math.abs(r - 67.4) < 1.4;
+      if (!gap) out += `<circle r="${f(r)}" fill="none" stroke="${BURN}" stroke-width="${r > 82 ? 1.3 : 0.55}" opacity="0.85"/>`;
+    }
+    return (
+      out +
+      `<circle r="27" fill="none" stroke="${BURN}" stroke-width="1.2"/>` +
+      txt('Your Name', -5, 11.5, { italic: true }) +
+      txt('SIDE A', 16, 5.2, { ls: 2.2 }) +
+      `<circle r="2.4" fill="${BURN}"/>`
+    );
+  },
+
+  mountain: (uid) =>
+    `<defs><clipPath id="mc-${uid}"><circle r="76"/></clipPath></defs>` +
+    `<circle r="80" fill="none" stroke="${BURN}" stroke-width="1.4"/><circle r="76.5" fill="none" stroke="${BURN}" stroke-width="0.6"/>` +
+    `<g clip-path="url(#mc-${uid})">` +
+    `<circle cx="26" cy="-38" r="12" fill="none" stroke="${BURN}" stroke-width="1.2"/>` +
+    stroke('M-58 -50 H-34 M-66 -42 H-46 M44 -58 H62', 0.7) +
+    stroke('M-80 12 L-52 -24 L-36 -6 L-8 -46 L16 -12 L34 -28 L80 16', 1.5) +
+    stroke('M-16 -34 L-9 -28 L-3 -35 L4 -29 M-58 -16 L-52 -11 L-46 -17 M28 -20 L34 -15 L40 -21', 1) +
+    stroke('M-2 -30 L8 -8 M-44 -6 L-38 6 M38 -14 L46 2 M4 -22 L10 -10', 0.6) +
+    `<path d="M-80 34 L-54 8 L-36 24 L-6 -2 L20 26 L44 10 L80 36 L80 80 L-80 80Z" fill="${BURN}" opacity="0.93"/>` +
+    pine(-62, 18, 15) + pine(-44, 22, 12) + pine(28, 22, 13) + pine(56, 22, 16) + pine(-20, 16, 11) +
+    `<path d="M-70 52 Q-40 46 -10 52 T50 52 M-56 62 Q-30 57 -4 62 T44 62" fill="none" stroke="#C9A070" stroke-width="0.9" stroke-linecap="round" opacity="0.8"/>` +
+    '</g>',
+
+  botanical: () => {
+    const P = [[-8, 66], [-14, 22], [8, -18], [2, -66]];
+    const at = (t) => {
+      const u = 1 - t;
+      const b = [u * u * u, 3 * u * u * t, 3 * u * t * t, t * t * t];
+      const d = [-3 * u * u, 3 * u * u - 6 * u * t, 6 * u * t - 3 * t * t, 3 * t * t];
+      const sum = (w, i) => w.reduce((acc, k, j) => acc + k * P[j][i], 0);
+      return { x: sum(b, 0), y: sum(b, 1), ang: (Math.atan2(sum(d, 1), sum(d, 0)) * 180) / Math.PI };
+    };
+    let out =
+      `<circle r="80" fill="none" stroke="${BURN}" stroke-width="1.3"/>` +
+      stroke(`M${P[0].join(' ')} C${P[1].join(' ')} ${P[2].join(' ')} ${P[3].join(' ')}`, 1.3);
+    for (let i = 0; i < 9; i++) {
+      const t = 0.14 + i * 0.095;
+      const { x, y, ang } = at(t);
+      const len = 30 * (1 - t * 0.62);
+      out += leaf(x, y, len, len * 0.3, ang + (i % 2 ? 46 : -46), false);
+      out += leaf(x, y, len * 0.92, len * 0.28, ang + (i % 2 ? -52 : 52), false);
+    }
+    // two berry sprigs
+    out += stroke('M-10 50 Q-38 40 -52 14 M-30 42 L-40 44 M-42 30 L-52 34 M-48 20 L-58 18', 0.9);
+    out += dot(-52, 14, 2.6) + dot(-40, 44, 2.4) + dot(-52, 34, 2.4) + dot(-58, 18, 2.2);
+    out += stroke('M-4 44 Q30 40 50 10 M26 38 L36 42 M40 26 L50 30 M47 16 L56 12', 0.9);
+    out += dot(50, 10, 2.6) + dot(36, 42, 2.4) + dot(50, 30, 2.4) + dot(56, 12, 2.2);
+    return out;
+  },
+};
+
+/* ---------- shared defs ---------- */
+
+function defs(seed, blur) {
+  return `<defs>
+  <radialGradient id="face" cx="0" cy="0" r="91" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#A97C53"/><stop offset="0.16" stop-color="#B58960"/><stop offset="0.34" stop-color="#CBA171"/>
+    <stop offset="0.8" stop-color="#D7B484"/><stop offset="1" stop-color="#CFA878"/>
+  </radialGradient>
+  <linearGradient id="light" x1="-70" y1="-80" x2="70" y2="80" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#FFF4DC" stop-opacity="0.2"/><stop offset="0.5" stop-color="#FFF4DC" stop-opacity="0"/>
+    <stop offset="1" stop-color="#1E0F05" stop-opacity="0.16"/>
+  </linearGradient>
+  <radialGradient id="rim" cx="0" cy="0" r="91" gradientUnits="userSpaceOnUse">
+    <stop offset="0.86" stop-color="#3A2314" stop-opacity="0"/><stop offset="1" stop-color="#3A2314" stop-opacity="0.34"/>
+  </radialGradient>
+  <filter id="bark" x="-12%" y="-12%" width="124%" height="124%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" seed="${seed}" result="n1"/>
+    <feDisplacementMap in="SourceGraphic" in2="n1" scale="7" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+    <feTurbulence type="fractalNoise" baseFrequency="0.45" numOctaves="2" seed="${seed + 3}" result="n2"/>
+    <feColorMatrix in="n2" type="matrix" values="0 0 0 0 0.09  0 0 0 0 0.055  0 0 0 0 0.03  0 0 0 1.5 -0.5" result="speck"/>
+    <feComposite in="speck" in2="shape" operator="in" result="speckIn"/>
+    <feMerge><feMergeNode in="shape"/><feMergeNode in="speckIn"/></feMerge>
+  </filter>
+  <filter id="wobble" x="-10%" y="-10%" width="120%" height="120%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.028" numOctaves="2" seed="${seed + 7}"/>
+    <feDisplacementMap in="SourceGraphic" scale="5" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+  <filter id="pores" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" seed="${seed + 11}" result="n"/>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.3  0 0 0 0 0.17  0 0 0 0 0.08  0 0 0 0.9 -0.34"/>
+    <feComposite in2="SourceGraphic" operator="in"/>
+  </filter>
+  <filter id="burn" x="-6%" y="-6%" width="112%" height="112%">
+    <feGaussianBlur in="SourceAlpha" stdDeviation="0.9" result="b"/>
+    <feFlood flood-color="#5B3317" flood-opacity="0.5"/><feComposite in2="b" operator="in" result="halo"/>
+    <feOffset in="SourceAlpha" dx="0.45" dy="0.55" result="o"/>
+    <feFlood flood-color="#F6DFB8" flood-opacity="0.4"/><feComposite in2="o" operator="in" result="hl"/>
+    <feMerge><feMergeNode in="hl"/><feMergeNode in="halo"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="${blur}"/></filter>
+  <filter id="contact" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="${f(blur * 0.25)}"/></filter>
+  <filter id="paper" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.32" numOctaves="3" seed="${seed + 17}" result="n"/>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.24  0 0 0 0 0.14  0 0 0 0.55 -0.2"/>
+  </filter>
+  <filter id="table" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.0022 0.055" numOctaves="4" seed="${seed + 23}" result="n"/>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.1  0 0 0 0 0.05  0 0 0 0 0.02  0 0 0 1.7 -0.62"/>
+  </filter>
+  <filter id="tablelight" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.0016 0.04" numOctaves="3" seed="${seed + 29}" result="n"/>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.62  0 0 0 0 0.4  0 0 0 0 0.24  0 0 0 1.2 -0.62"/>
+  </filter>
+  <clipPath id="faceclip"><circle r="91"/></clipPath>
+</defs>`;
+}
+
+/* ---------- pieces of a shot ---------- */
+
+function backdrop(kind, W, H) {
+  const vig = `<radialGradient id="vig" cx="0.42" cy="0.4" r="0.85"><stop offset="0.35" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#1A0E06" stop-opacity="${
+    kind === 'walnut' ? 0.5 : 0.2
+  }"/></radialGradient>`;
+  const wash = `<linearGradient id="wash" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF8E8" stop-opacity="${
+    kind === 'walnut' ? 0.1 : 0.4
+  }"/><stop offset="0.6" stop-color="#FFF8E8" stop-opacity="0"/></linearGradient>`;
+  const full = (attrs) => `<rect width="${W}" height="${H}" ${attrs}/>`;
+  if (kind === 'walnut') {
+    const seams = [0.31, 0.68].map((p) => `<rect y="${f(H * p)}" width="${W}" height="3" fill="#1C110A" opacity="0.55"/>`).join('');
+    return `<defs>${vig}${wash}</defs>${full('fill="#4A2F1D"')}${full('filter="url(#table)"')}${full('filter="url(#tablelight)" opacity="0.5"')}${seams}${full('fill="url(#wash)"')}${full('fill="url(#vig)"')}`;
+  }
+  const base = kind === 'sand' ? '#DCC9AA' : '#EDE3CF';
+  return `<defs>${vig}${wash}</defs>${full(`fill="${base}"`)}${full('filter="url(#paper)" opacity="0.5"')}${full('fill="url(#wash)"')}${full('fill="url(#vig)"')}`;
+}
+
+function slice({ cx, cy, R, design = 'blank', seed = 1, hole = false, uid = 'a', rimOnly = false }) {
+  const r = rng(seed);
+  let rings = '';
+  let rad = 8 + r() * 5;
+  while (rad < 88) {
+    rings += `<circle r="${f(rad)}" fill="none" stroke="#7A5233" stroke-width="${f(0.5 + r() * 0.9)}" opacity="${f(0.13 + r() * 0.2)}"/>`;
+    rad += 4.5 + r() * 7;
+  }
+  const a = r() * Math.PI * 2;
+  const crack = `<path d="M${f(Math.cos(a) * 3)} ${f(Math.sin(a) * 3)} Q${f(Math.cos(a + 0.2) * 16)} ${f(Math.sin(a + 0.2) * 16)} ${f(Math.cos(a - 0.05) * 30)} ${f(Math.sin(a - 0.05) * 30)}" fill="none" stroke="#5A3A22" stroke-width="0.7" opacity="0.4" stroke-linecap="round"/>`;
+  const bark = rimOnly
+    ? '<rect x="-101" y="-101" width="202" height="202" fill="#2F2017"/><rect x="-101" y="-101" width="202" height="202" fill="#000" filter="url(#pores)" opacity="0.5"/>'
+    : '<circle r="97" fill="#2F2017" filter="url(#bark)"/>';
+  return `<g transform="translate(${cx} ${cy}) scale(${f(R / 100)})">
+    ${bark}
+    <circle r="91" fill="url(#face)"/>
+    <g clip-path="url(#faceclip)">
+      <g filter="url(#wobble)">${rings}</g>
+      ${crack}
+      <circle r="91" fill="#000" filter="url(#pores)"/>
+      <circle r="91" fill="url(#light)"/>
+      <circle r="91" fill="url(#rim)"/>
+    </g>
+    <g filter="url(#wobble)"><circle r="91" fill="none" stroke="#4A3020" stroke-width="1.6" opacity="0.6"/></g>
+    ${hole ? '<circle cx="0" cy="-78" r="3.6" fill="#1A0F08"/><path d="M-3.4 -77 A3.6 3.6 0 0 0 3.4 -77" fill="none" stroke="#E9CFA4" stroke-width="0.6" opacity="0.7"/>' : ''}
+    <g filter="url(#burn)">${designs[design](uid)}</g>
+  </g>`;
+}
+
+// Twine from the top of the frame down through the hole.
+function twine(cx, cy, R, sway = 0) {
+  const hx = cx;
+  const hy = cy - R * 0.78;
+  const ky = cy - R * 1.12;
+  const w = f(R * 0.022);
+  const strand = (d) =>
+    `<path d="${d}" fill="none" stroke="#B99A68" stroke-width="${w}" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#7E6238" stroke-width="${f(w * 0.5)}" stroke-dasharray="${f(w * 1.2)} ${f(w * 2.2)}" opacity="0.6"/>`;
+  return (
+    strand(`M${f(cx + sway)} -20 Q${f(cx + sway * 0.4)} ${f(ky * 0.5)} ${cx} ${f(ky)}`) +
+    strand(`M${cx} ${f(ky)} Q${f(hx - R * 0.07)} ${f((ky + hy) / 2)} ${hx} ${f(hy)}`) +
+    strand(`M${cx} ${f(ky)} Q${f(hx + R * 0.07)} ${f((ky + hy) / 2)} ${hx} ${f(hy)}`) +
+    `<circle cx="${cx}" cy="${f(ky)}" r="${f(w * 1.1)}" fill="#A88856"/>`
+  );
+}
+
+const shadow = (cx, cy, R, hang) =>
+  hang
+    ? `<circle cx="${f(cx + R * 0.1)}" cy="${f(cy + R * 0.15)}" r="${f(R * 0.97)}" fill="#1A0E06" opacity="0.32" filter="url(#shadow)"/>`
+    : `<circle cx="${f(cx + R * 0.05)}" cy="${f(cy + R * 0.07)}" r="${f(R * 0.98)}" fill="#120904" opacity="0.5" filter="url(#shadow)"/><circle cx="${f(cx + R * 0.012)}" cy="${f(cy + R * 0.02)}" r="${f(R * 0.985)}" fill="#120904" opacity="0.55" filter="url(#contact)"/>`;
+
+const svg = (W, H, seed, blur, body) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${defs(seed, blur)}${body}</svg>`;
+
+/* ---------- shots ---------- */
+
+function productShot({ W, H, bg, R, cx = W / 2, cy = H / 2, design, seed, hang = false, sway = 0, under }) {
+  let body = backdrop(bg, W, H);
+  if (hang) body += shadow(cx, cy, R, true) + twine(cx, cy, R, sway);
+  if (under) {
+    body += shadow(under.cx, under.cy, under.R, false) + slice({ ...under, design: 'blank', seed: seed + 40, uid: 'u' });
+  }
+  if (!hang) body += shadow(cx, cy, R, false);
+  body += slice({ cx, cy, R, design, seed, hole: hang || design === 'vinyl', uid: 'm' });
+  return svg(W, H, seed, f(R * 0.07), body);
+}
+
+function heroFace() {
+  const S = 1024;
+  // Bark runs to the edge of the square so it maps onto the 3D disc.
+  const body = slice({ cx: S / 2, cy: S / 2, R: S / 2, design: 'peace', seed: 5, hole: true, uid: 'h', rimOnly: true });
+  return svg(S, S, 5, 10, body);
+}
+
+function studioShot() {
+  const W = 1500;
+  const H = 1000;
+  let body = backdrop('walnut', W, H);
+  // a length of branch
+  body += `<g transform="translate(250 760) rotate(-14)"><rect x="-190" y="-58" width="560" height="116" rx="56" fill="#120904" opacity="0.5" filter="url(#shadow)" transform="translate(10 16)"/><rect x="-190" y="-58" width="560" height="116" rx="50" fill="#2F2017"/><rect x="-190" y="-58" width="560" height="116" rx="50" fill="#000" filter="url(#pores)" opacity="0.7"/><path d="M-150 -30 H300 M-120 -6 H330 M-160 22 H280 M-60 40 H240" stroke="#1A100A" stroke-width="3" opacity="0.5" stroke-linecap="round"/><ellipse cx="368" cy="0" rx="26" ry="52" fill="#CBA171"/><ellipse cx="368" cy="0" rx="26" ry="52" fill="none" stroke="#2F2017" stroke-width="7"/><ellipse cx="368" cy="0" rx="9" ry="19" fill="#A97C53"/></g>`;
+  // a sheet of sandpaper
+  body += `<g transform="translate(1210 250) rotate(11)"><rect x="-150" y="-110" width="300" height="220" fill="#120904" opacity="0.45" filter="url(#contact)" transform="translate(6 9)"/><rect x="-150" y="-110" width="300" height="220" fill="#B58A5A"/><rect x="-150" y="-110" width="300" height="220" fill="#000" filter="url(#pores)" opacity="0.8"/></g>`;
+  const pieces = [
+    { cx: 560, cy: 400, R: 250, design: 'blank', seed: 61 },
+    { cx: 1020, cy: 640, R: 215, design: 'mountain', seed: 62 },
+    { cx: 1300, cy: 800, R: 130, design: 'blank', seed: 63 },
+    { cx: 200, cy: 250, R: 150, design: 'botanical', seed: 64 },
+  ];
+  pieces.forEach((p, i) => {
+    body += shadow(p.cx, p.cy, p.R, false) + slice({ ...p, uid: `s${i}` });
+  });
+  // loose twine
+  body += `<path d="M700 900 C820 820 760 760 880 880 S1000 930 1090 905" fill="none" stroke="#B99A68" stroke-width="6" stroke-linecap="round"/><path d="M700 900 C820 820 760 760 880 880 S1000 930 1090 905" fill="none" stroke="#7E6238" stroke-width="3" stroke-dasharray="7 13" opacity="0.6"/>`;
+  return svg(W, H, 60, 16, body);
+}
+
+const shots = [
+  ['hero-ornament-face', heroFace(), 88],
+  ['collection/peace-on-earth', productShot({ W: 1200, H: 1500, bg: 'linen', R: 400, cy: 860, design: 'peace', seed: 11, hang: true, sway: 30 })],
+  ['collection/merry-christmas', productShot({ W: 1200, H: 1200, bg: 'sand', R: 370, cy: 690, design: 'merry', seed: 12, hang: true, sway: -24 })],
+  ['collection/nativity', productShot({ W: 1200, H: 1500, bg: 'walnut', R: 430, cy: 760, design: 'nativity', seed: 13 })],
+  ['collection/vinyl-record', productShot({ W: 1500, H: 1200, bg: 'linen', R: 420, cx: 780, cy: 660, design: 'vinyl', seed: 14 })],
+  ['collection/worlds-best-mom', productShot({ W: 1200, H: 1500, bg: 'sand', R: 390, cy: 870, design: 'mom', seed: 15, hang: true, sway: 18 })],
+  ['collection/worlds-best-dad', productShot({ W: 1200, H: 1500, bg: 'walnut', R: 410, cy: 760, design: 'dad', seed: 16 })],
+  ['collection/life-is-better-with-pets', productShot({ W: 1200, H: 1500, bg: 'linen', R: 390, cy: 870, design: 'pets', seed: 17, hang: true, sway: -34 })],
+  ['collection/mountain-coaster', productShot({ W: 1500, H: 1000, bg: 'walnut', R: 360, cx: 820, cy: 520, design: 'mountain', seed: 18, under: { cx: 470, cy: 610, R: 340 } })],
+  ['collection/botanical-coaster', productShot({ W: 1200, H: 1500, bg: 'linen', R: 400, cy: 720, design: 'botanical', seed: 19, under: { cx: 690, cy: 960, R: 380 } })],
+  ['custom-blank', productShot({ W: 1200, H: 1200, bg: 'linen', R: 400, cy: 680, design: 'blank', seed: 21, hang: true, sway: 14 })],
+  ['about-studio', studioShot()],
+];
+
+for (const [name, markup, quality = 80] of shots) {
+  const file = join(OUT, `${name}.webp`);
+  await mkdir(dirname(file), { recursive: true });
+  const info = await sharp(Buffer.from(markup)).webp({ quality, effort: 5 }).toFile(file);
+  console.log(`${name}.webp  ${info.width}x${info.height}  ${(info.size / 1024).toFixed(0)} KB`);
+}
