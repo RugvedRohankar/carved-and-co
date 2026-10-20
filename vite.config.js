@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 
-// The site is served from https://<user>.github.io/carved-and-co/ on GitHub Pages.
+// The site is served from https://<user>.github.io/etched-in-oak/ on GitHub Pages.
 export default defineConfig({
-  base: '/carved-and-co/',
+  base: '/etched-in-oak/',
 });

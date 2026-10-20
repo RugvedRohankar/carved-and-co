@@ -1,0 +1,17 @@
+{
+  "name": "Etched in Oak",
+  "short_name": "Etched in Oak",
+  "description": "Laser-Cut Wooden Gifts",
+  "start_url": ".",
+  "scope": ".",
+  "background_color": "#f5ecdc",
+  "theme_color": "#f5ecdc",
+  "icons": [
+    {
+      "src": "brand/etched-in-oak-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

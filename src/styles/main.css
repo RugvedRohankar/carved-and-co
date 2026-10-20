@@ -287,32 +287,30 @@
     text-underline-offset: 3px;
   }
 
-  /* Wordmark */
+  /* Logo: the horizontal lockup keeps its own proportions; only height is set. */
   .logo {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
     min-height: 44px;
     text-decoration: none;
   }
 
-  .logo__mark {
-    width: 22px;
-    height: 28px;
+  .logo__img {
+    width: auto;
+    height: 34px;
     flex: none;
   }
 
-  .logo__word {
-    font-family: var(--font-display);
-    font-size: 1.5rem;
-    line-height: 1;
-    letter-spacing: -0.012em;
-    white-space: nowrap;
+  @media (max-width: 380px) {
+    .logo__img {
+      height: 30px;
+    }
   }
 
-  .logo__word em {
-    color: var(--amber-mark);
-    font-style: italic;
+  @media (min-width: 900px) {
+    .logo__img {
+      height: 44px;
+    }
   }
 
   /* Form controls */
@@ -526,22 +524,8 @@
       gap: 12px;
     }
 
-    .site-header .logo {
-      gap: 8px;
-    }
-
-    .site-header .logo__word {
-      font-size: 1.3125rem;
-    }
-
     .site-header .btn--small {
       padding-inline: 16px;
-    }
-  }
-
-  @media (max-width: 380px) {
-    .site-header .logo__mark {
-      display: none;
     }
   }
 
@@ -1592,18 +1576,15 @@
     color: var(--ivory);
   }
 
-  .site-footer__word {
+  /* The transparent lockup sits inside a square with wide empty margins
+     (artwork spans x 105-696, y 169-607 of 800). Negative margins trim that
+     space so the mark lines up with the footer's left edge. */
+  .site-footer__logo {
+    --logo-w: clamp(240px, 26vw, 380px);
+    width: var(--logo-w);
     max-width: none;
-    font-family: var(--font-display);
-    font-size: clamp(3.4rem, 15.4vw, 10rem);
-    line-height: 0.9;
-    letter-spacing: -0.04em;
-    white-space: nowrap;
-  }
-
-  .site-footer__word em {
-    color: var(--amber);
-    font-style: italic;
+    height: auto;
+    margin: calc(var(--logo-w) * -0.211) 0 calc(var(--logo-w) * -0.241) calc(var(--logo-w) * -0.131);
   }
 
   .site-footer__row {
