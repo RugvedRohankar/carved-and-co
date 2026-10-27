@@ -35,20 +35,6 @@ const txt = (s, y, size, o = {}) =>
     o.italic ? ' font-style="italic"' : ''
   }${o.ls ? ` letter-spacing="${o.ls}"` : ''} fill="${BURN}">${esc(s)}</text>`;
 
-function arcText(str, r, size, { step = 8, bottom = false } = {}) {
-  const chars = [...str];
-  const mid = (chars.length - 1) / 2;
-  return chars
-    .map((ch, i) => {
-      const deg = (i - mid) * step;
-      const a = (deg * Math.PI) / 180;
-      const x = r * Math.sin(a);
-      const y = (bottom ? 1 : -1) * r * Math.cos(a);
-      return `<text transform="translate(${f(x)} ${f(y)}) rotate(${f(bottom ? -deg : deg)})" text-anchor="middle" font-family="${SERIF}" font-size="${size}" fill="${BURN}">${esc(ch)}</text>`;
-    })
-    .join('');
-}
-
 const stroke = (d, w = 1.2, extra = '') =>
   `<path d="${d}" fill="none" stroke="${BURN}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" ${extra}/>`;
 
@@ -57,15 +43,7 @@ const leaf = (x, y, len, w, rot, filled = true) =>
     filled ? '' : ` M0 0 L${f(len * 0.9)} 0`
   }" ${filled ? `fill="${BURN}"` : `fill="none" stroke="${BURN}" stroke-width="0.9" stroke-linejoin="round"`}/>`;
 
-const sparkle = (x, y, r) => {
-  const k = f(r * 0.17);
-  return `<path transform="translate(${x} ${y})" d="M0 ${-r} Q${k} ${-k} ${r} 0 Q${k} ${k} 0 ${r} Q${-k} ${k} ${-r} 0 Q${-k} ${-k} 0 ${-r}Z" fill="${BURN}"/>`;
-};
-
 const dot = (x, y, r = 1.1) => `<circle cx="${f(x)}" cy="${f(y)}" r="${r}" fill="${BURN}"/>`;
-
-const heart = (x, y, s) =>
-  `<path transform="translate(${x} ${y}) scale(${s})" d="M0 6 C-11 -2 -5 -10 0 -4 C5 -10 11 -2 0 6Z" fill="${BURN}"/>`;
 
 const pine = (x, y, h) => {
   const w = h * 0.5;
@@ -73,90 +51,10 @@ const pine = (x, y, h) => {
   return `<path transform="translate(${f(x)} ${f(y)})" d="M${p(0, -h)} L${p(w * 0.45, -h * 0.6)} L${p(w * 0.2, -h * 0.6)} L${p(w * 0.72, -h * 0.25)} L${p(w * 0.3, -h * 0.25)} L${p(w, h * 0.12)} L${p(-w, h * 0.12)} L${p(-w * 0.3, -h * 0.25)} L${p(-w * 0.72, -h * 0.25)} L${p(-w * 0.2, -h * 0.6)} L${p(-w * 0.45, -h * 0.6)}Z M${p(-h * 0.06, h * 0.12)} h${f(h * 0.12)} v${f(h * 0.2)} h${f(-h * 0.12)}Z" fill="${BURN}"/>`;
 };
 
-const paw = (x, y, s) =>
-  `<g transform="translate(${x} ${y}) scale(${s})" fill="${BURN}"><path d="M0 2 C-9 2 -13 9 -11 14 C-9 19 -4 17 0 17 C4 17 9 19 11 14 C13 9 9 2 0 2Z"/><ellipse cx="-11.5" cy="-3" rx="3.6" ry="5" transform="rotate(-22 -11.5 -3)"/><ellipse cx="-4.2" cy="-9" rx="3.7" ry="5.4" transform="rotate(-8 -4.2 -9)"/><ellipse cx="4.2" cy="-9" rx="3.7" ry="5.4" transform="rotate(8 4.2 -9)"/><ellipse cx="11.5" cy="-3" rx="3.6" ry="5" transform="rotate(22 11.5 -3)"/></g>`;
-
-// A sprig that follows an arc of radius r from angle a0 to a1 (degrees, clockwise from top).
-function laurel(r, a0, a1, n, len = 9) {
-  const pts = [];
-  let out = '';
-  for (let i = 0; i <= n; i++) {
-    const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
-    const x = r * Math.sin(a);
-    const y = -r * Math.cos(a);
-    pts.push([x, y]);
-    if (i > 0) {
-      const dir = (Math.atan2(y - pts[i - 1][1], x - pts[i - 1][0]) * 180) / Math.PI;
-      out += leaf(x, y, len, len * 0.3, dir - 36) + leaf(x, y, len, len * 0.3, dir + 36);
-    }
-  }
-  return out + stroke(`M${pts.map((p) => p.map(f).join(' ')).join(' L')}`, 0.9);
-}
-
-const rule = (y, half = 30) =>
-  stroke(`M${-half} ${y} H-7 M7 ${y} H${half}`, 0.8) +
-  `<path d="M0 ${y - 3.2} L3.2 ${y} L0 ${y + 3.2} L-3.2 ${y}Z" fill="${BURN}"/>`;
-
-const dotRing = (r, n) =>
-  Array.from({ length: n }, (_, i) => {
-    const a = (i / n) * Math.PI * 2;
-    return dot(r * Math.cos(a), r * Math.sin(a), 0.9);
-  }).join('');
-
-/* ---------- the nine designs ---------- */
+/* ---------- designs still shown as placeholders ---------- */
 
 const designs = {
   blank: () => '',
-
-  peace: () =>
-    sparkle(0, -50, 13) +
-    stroke('M0 -72 V-67 M0 -33 V-28 M-22 -50 H-17 M17 -50 H22', 0.9) +
-    dot(-30, -38) + dot(31, -62, 0.9) + dot(-24, -66, 0.8) + dot(36, -36, 0.8) +
-    txt('Peace', 6, 46, { italic: true }) +
-    txt('ON EARTH', 30, 13.5, { ls: 5.5 }) +
-    rule(47) +
-    laurel(74, 214, 250, 5, 8) + laurel(74, 146, 110, 5, 8),
-
-  merry: () =>
-    dotRing(79, 56) +
-    pine(0, -34, 26) + sparkle(-24, -44, 5) + sparkle(25, -50, 4) + dot(-34, -26, 0.9) + dot(36, -30, 0.9) +
-    txt('Merry', 14, 44, { italic: true }) +
-    txt('CHRISTMAS', 36, 13.5, { ls: 5 }) +
-    rule(52, 26),
-
-  nativity: () =>
-    sparkle(0, -58, 12) + stroke('M0 -44 V-30', 0.9) +
-    dot(-40, -52, 0.9) + dot(38, -58, 0.9) + dot(-22, -66, 0.8) + dot(54, -34, 0.8) + dot(-56, -30, 0.8) +
-    // stable
-    stroke('M-56 -4 L0 -36 L56 -4', 2) + stroke('M-46 -9 V42 M46 -9 V42', 1.6) + stroke('M-64 42 H64', 1.6) +
-    // Mary, kneeling
-    `<circle cx="-23" cy="6" r="6" fill="${BURN}"/><path d="M-30 12 Q-37 28 -35 42 L-10 42 Q-12 22 -19 12Z" fill="${BURN}"/>` +
-    // Joseph, standing with a staff
-    `<circle cx="25" cy="-3" r="6.4" fill="${BURN}"/><path d="M18 4 Q12 24 12 42 L36 42 Q37 20 32 4Z" fill="${BURN}"/>` +
-    stroke('M41 42 V-10 Q41 -17 35 -15', 1.3) +
-    // manger
-    stroke('M-7 42 L7 28 M7 42 L-7 28', 1.4) + stroke('M-9 27 Q0 34 9 27', 1.6) +
-    `<circle cx="0" cy="22.5" r="3.4" fill="${BURN}"/>` + stroke('M-6 20 A6.5 6.5 0 0 1 6 20', 0.7) +
-    txt('O HOLY NIGHT', 62, 9.5, { ls: 4 }),
-
-  mom: () =>
-    arcText('WORLD’S BEST', 60, 13, { step: 11 }) +
-    txt('Mom', 22, 58, { italic: true }) +
-    heart(0, 40, 0.9) +
-    laurel(72, 205, 252, 6, 8.5) + laurel(72, 155, 108, 6, 8.5),
-
-  dad: () =>
-    arcText('WORLD’S BEST', 60, 13, { step: 11 }) +
-    txt('Dad', 22, 58, { italic: true }) +
-    sparkle(0, 42, 6.5) +
-    `<circle r="78" fill="none" stroke="${BURN}" stroke-width="1.1"/><circle r="74.5" fill="none" stroke="${BURN}" stroke-width="0.5"/>`,
-
-  pets: () =>
-    `<circle r="78" fill="none" stroke="${BURN}" stroke-width="0.9" stroke-dasharray="1 5" stroke-linecap="round"/>` +
-    paw(0, -44, 1.05) +
-    txt('Life is better', 10, 25, { italic: true }) +
-    txt('with pets', 37, 25, { italic: true }) +
-    rule(53, 24),
 
   vinyl: () => {
     let out = '';
@@ -290,7 +188,7 @@ function backdrop(kind, W, H) {
   return `<defs>${vig}${wash}</defs>${full(`fill="${base}"`)}${full('filter="url(#paper)" opacity="0.5"')}${full('fill="url(#wash)"')}${full('fill="url(#vig)"')}`;
 }
 
-function slice({ cx, cy, R, design = 'blank', seed = 1, hole = false, uid = 'a', rimOnly = false }) {
+function slice({ cx, cy, R, design = 'blank', seed = 1, hole = false, uid = 'a' }) {
   const r = rng(seed);
   let rings = '';
   let rad = 8 + r() * 5;
@@ -300,11 +198,8 @@ function slice({ cx, cy, R, design = 'blank', seed = 1, hole = false, uid = 'a',
   }
   const a = r() * Math.PI * 2;
   const crack = `<path d="M${f(Math.cos(a) * 3)} ${f(Math.sin(a) * 3)} Q${f(Math.cos(a + 0.2) * 16)} ${f(Math.sin(a + 0.2) * 16)} ${f(Math.cos(a - 0.05) * 30)} ${f(Math.sin(a - 0.05) * 30)}" fill="none" stroke="#5A3A22" stroke-width="0.7" opacity="0.4" stroke-linecap="round"/>`;
-  const bark = rimOnly
-    ? '<rect x="-101" y="-101" width="202" height="202" fill="#2F2017"/><rect x="-101" y="-101" width="202" height="202" fill="#000" filter="url(#pores)" opacity="0.5"/>'
-    : '<circle r="97" fill="#2F2017" filter="url(#bark)"/>';
   return `<g transform="translate(${cx} ${cy}) scale(${f(R / 100)})">
-    ${bark}
+    <circle r="97" fill="#2F2017" filter="url(#bark)"/>
     <circle r="91" fill="url(#face)"/>
     <g clip-path="url(#faceclip)">
       <g filter="url(#wobble)">${rings}</g>
@@ -356,13 +251,6 @@ function productShot({ W, H, bg, R, cx = W / 2, cy = H / 2, design, seed, hang =
   return svg(W, H, seed, f(R * 0.07), body);
 }
 
-function heroFace() {
-  const S = 1024;
-  // Bark runs to the edge of the square so it maps onto the 3D disc.
-  const body = slice({ cx: S / 2, cy: S / 2, R: S / 2, design: 'peace', seed: 5, hole: true, uid: 'h', rimOnly: true });
-  return svg(S, S, 5, 10, body);
-}
-
 function studioShot() {
   const W = 1500;
   const H = 1000;
@@ -386,16 +274,7 @@ function studioShot() {
 }
 
 const shots = [
-  ['hero-ornament-face', heroFace(), 88],
-  ['collection/peace-on-earth', productShot({ W: 1200, H: 1500, bg: 'linen', R: 400, cy: 860, design: 'peace', seed: 11, hang: true, sway: 30 })],
-  ['collection/merry-christmas', productShot({ W: 1200, H: 1200, bg: 'sand', R: 370, cy: 690, design: 'merry', seed: 12, hang: true, sway: -24 })],
-  ['collection/nativity', productShot({ W: 1200, H: 1500, bg: 'walnut', R: 430, cy: 760, design: 'nativity', seed: 13 })],
   ['collection/vinyl-record', productShot({ W: 1500, H: 1200, bg: 'linen', R: 420, cx: 780, cy: 660, design: 'vinyl', seed: 14 })],
-  ['collection/worlds-best-mom', productShot({ W: 1200, H: 1500, bg: 'sand', R: 390, cy: 870, design: 'mom', seed: 15, hang: true, sway: 18 })],
-  ['collection/worlds-best-dad', productShot({ W: 1200, H: 1500, bg: 'walnut', R: 410, cy: 760, design: 'dad', seed: 16 })],
-  ['collection/life-is-better-with-pets', productShot({ W: 1200, H: 1500, bg: 'linen', R: 390, cy: 870, design: 'pets', seed: 17, hang: true, sway: -34 })],
-  ['collection/mountain-coaster', productShot({ W: 1500, H: 1000, bg: 'walnut', R: 360, cx: 820, cy: 520, design: 'mountain', seed: 18, under: { cx: 470, cy: 610, R: 340 } })],
-  ['collection/botanical-coaster', productShot({ W: 1200, H: 1500, bg: 'linen', R: 400, cy: 720, design: 'botanical', seed: 19, under: { cx: 690, cy: 960, R: 380 } })],
   ['custom-blank', productShot({ W: 1200, H: 1200, bg: 'linen', R: 400, cy: 680, design: 'blank', seed: 21, hang: true, sway: 14 })],
   ['about-studio', studioShot()],
 ];

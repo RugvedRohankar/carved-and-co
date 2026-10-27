@@ -6,7 +6,7 @@
     <title>Etched in Oak | Laser-Cut Wooden Gifts</title>
     <meta
       name="description"
-      content="Laser-engraved ornaments and coasters made from real walnut branch slices, bark edge left on. Made by University of Cincinnati students at the 1819 Innovation Hub."
+      content="Laser-engraved ornaments made from real walnut branch slices, bark edge left on. Made by University of Cincinnati students at the 1819 Innovation Hub."
     />
     <meta name="theme-color" content="#f5ecdc" />
     <meta property="og:type" content="website" />
@@ -15,7 +15,7 @@
     <meta property="og:title" content="Etched in Oak | Laser-Cut Wooden Gifts" />
     <meta
       property="og:description"
-      content="Laser-engraved ornaments and coasters made from real walnut branch slices, by University of Cincinnati students."
+      content="Laser-engraved ornaments made from real walnut branch slices, by University of Cincinnati students."
     />
     <!-- Social crawlers need absolute URLs, so these point at the live site. -->
     <meta property="og:image" content="https://rugvedrohankar.github.io/etched-in-oak/brand/etched-in-oak-logo-primary.png" />
@@ -28,7 +28,7 @@
     <link rel="icon" type="image/svg+xml" href="/brand/etched-in-oak-icon.svg" />
     <link rel="apple-touch-icon" href="/brand/etched-in-oak-icon-512.png" />
     <link rel="manifest" href="/site.webmanifest" />
-    <link rel="preload" as="image" href="/images/hero-ornament-face.webp" type="image/webp" fetchpriority="high" />
+    <link rel="preload" as="image" href="/products/peace-on-earth.webp" type="image/webp" fetchpriority="high" />
     <script>
       // Motion is opt-in: these classes only exist when scripts run and the
       // visitor has not asked for reduced motion. The timer is a safety net so
@@ -66,7 +66,7 @@
       </nav>
 
       <div class="site-header__actions">
-        <a class="btn btn--small" href="#order">Pre-order</a>
+        <a class="btn btn--small site-header__buy" href="%STORE_URL%" target="_blank" rel="noopener noreferrer">Buy on our UC store<span class="visually-hidden"> (opens in a new tab)</span></a>
         <button class="menu-toggle" type="button" aria-haspopup="dialog" data-menu-open>Menu</button>
       </div>
     </header>
@@ -83,7 +83,7 @@
           <li><a href="#process">How it's made</a></li>
           <li><a href="#pricing">Pricing</a></li>
           <li><a href="#about">About</a></li>
-          <li><a href="#order">Pre-order</a></li>
+          <li><a href="%STORE_URL%" target="_blank" rel="noopener noreferrer">Buy on our UC store<span class="visually-hidden"> (opens in a new tab)</span></a></li>
         </ul>
       </nav>
     </dialog>
@@ -92,30 +92,30 @@
       <!-- ============ HERO ============ -->
       <section class="hero" id="top" aria-labelledby="hero-title">
         <!--
-          The hero ornament is drawn in WebGL from this one image: a square,
-          face-on photo of an ornament that fills the frame edge to edge.
-          Swap /public/images/hero-ornament-face.webp for your own, then remove
-          data-placeholder below.
+          The hero ornament is drawn in WebGL from this product photo so it can
+          sway on its twine. Where the ornament sits inside the photo is set by
+          the --photo-* values on .hero__stage in main.css.
         -->
-        <div class="hero__stage" data-hero-stage data-placeholder="Placeholder ornament">
+        <div class="hero__stage" data-hero-stage>
           <div class="hero__fallback" data-hero-fallback>
             <span class="hero__twine" aria-hidden="true"></span>
             <img
-              class="hero__disc"
-              data-hero-disc
-              src="/images/hero-ornament-face.webp"
-              width="1024"
-              height="1024"
-              alt="Placeholder: a round walnut ornament with the bark edge left on, engraved with the words Peace on Earth and hanging by twine."
+              class="hero__photo"
+              data-hero-photo
+              src="/products/peace-on-earth.webp"
+              width="1254"
+              height="1254"
+              alt="Etched wooden Peace on Earth ornament with a dove carrying an olive branch"
               fetchpriority="high"
               decoding="async"
             />
+            <span class="hero__shadow" aria-hidden="true"></span>
           </div>
           <canvas class="hero__canvas" data-hero-canvas aria-hidden="true"></canvas>
         </div>
 
         <div class="hero__copy">
-          <h1 id="hero-title" data-hero-title>Ornaments and coasters, engraved in real walnut.</h1>
+          <h1 id="hero-title" data-hero-title>Ornaments, engraved in real walnut.</h1>
           <p class="hero__lede" data-hero-fade>
             Every piece starts as a slice of walnut branch with the bark edge left on. We laser-engrave each one at
             the University of Cincinnati's 1819 Innovation Hub.
@@ -132,7 +132,7 @@
         <header class="section-head">
           <h2 id="collection-title" data-split>The collection</h2>
           <p data-fade>
-            Nine designs, each engraved on its own round of walnut. No two slices have the same grain or the same bark
+            Eight designs, each engraved on its own round of walnut. No two slices have the same grain or the same bark
             edge, so no two pieces come out alike.
           </p>
         </header>
@@ -140,228 +140,110 @@
         <div class="group">
           <div class="group__head" data-rule>
             <h3>Ornaments</h3>
-            <p>$15 each, or 2 for $25. Custom ornaments are $20.</p>
+            <p>
+              Etched wooden ornament: $14.99, or 2 for $24.99.<br />
+              Custom etched ornament: $19.99, or 2 for $34.99.
+            </p>
           </div>
 
-          <!--
-            To swap a photo: replace the file in /public/images/collection with
-            one of the same name, then remove data-placeholder from that tile.
-          -->
-          <ul class="pieces pieces--ornaments" role="list">
-            <li class="piece piece--a">
-              <a class="piece__link" href="#order" data-pick="peace-on-earth">
-                <div class="piece__media" data-reveal="circle" data-placeholder style="--ar: 4 / 5">
-                  <div class="piece__inner" data-parallax>
-                    <img
-                      src="/images/collection/peace-on-earth.webp"
-                      alt="Placeholder: walnut ornament engraved with Peace on Earth beneath a star, hanging by twine."
-                      width="1200"
-                      height="1500"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
+          <!-- Product photos live in /public/products. Replace a file with one of the same name to update it. -->
+          <ul class="pieces" role="list">
+            <li class="piece">
+              <div class="piece__media" data-reveal="circle">
+                <div class="piece__inner">
+                  <img src="/products/peace-on-earth.webp" alt="Etched wooden Peace on Earth ornament with a dove carrying an olive branch" width="1254" height="1254" loading="lazy" decoding="async" />
                 </div>
-                <div class="piece__caption">
-                  <h4>Peace on Earth</h4>
-                  <p class="piece__price">$15</p>
-                  <p class="piece__meta">Ornament</p>
-                  <p class="piece__action">Pre-order</p>
-                </div>
-              </a>
+              </div>
+              <div class="piece__caption">
+                <h4>Peace on Earth</h4>
+                <p class="piece__price">Etched wooden ornament: <strong>$14.99</strong>, or 2 for <strong>$24.99</strong></p>
+                <a class="btn btn--small piece__buy" href="%STORE_URL%" target="_blank" rel="noopener noreferrer">Buy on our UC store<span class="visually-hidden"> (opens in a new tab)</span></a>
+              </div>
             </li>
-
-            <li class="piece piece--b">
-              <a class="piece__link" href="#order" data-pick="merry-christmas">
-                <div class="piece__media" data-reveal="circle" data-placeholder style="--ar: 1 / 1">
-                  <div class="piece__inner" data-parallax>
-                    <img
-                      src="/images/collection/merry-christmas.webp"
-                      alt="Placeholder: walnut ornament engraved with Merry Christmas and a small pine tree, hanging by twine."
-                      width="1200"
-                      height="1200"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
+            <!-- The vinyl record still uses its placeholder illustration; swap the file and remove data-placeholder. -->
+            <li class="piece">
+              <div class="piece__media" data-reveal="circle" data-placeholder style="--frame-bg: #ece2cf">
+                <div class="piece__inner">
+                  <img src="/images/collection/vinyl-record.webp" alt="Placeholder: walnut ornament engraved as a vinyl record, with a name on the label." width="1500" height="1200" loading="lazy" decoding="async" />
                 </div>
-                <div class="piece__caption">
-                  <h4>Merry Christmas</h4>
-                  <p class="piece__price">$15</p>
-                  <p class="piece__meta">Ornament</p>
-                  <p class="piece__action">Pre-order</p>
-                </div>
-              </a>
+              </div>
+              <div class="piece__caption">
+                <h4>Vinyl record, with a name</h4>
+                <p class="piece__price">Custom etched ornament: <strong>$19.99</strong>, or 2 for <strong>$34.99</strong></p>
+                <a class="btn btn--small piece__buy" href="%STORE_URL%" target="_blank" rel="noopener noreferrer">Buy on our UC store<span class="visually-hidden"> (opens in a new tab)</span></a>
+              </div>
             </li>
-
-            <li class="piece piece--c">
-              <a class="piece__link" href="#order" data-pick="nativity">
-                <div class="piece__media" data-reveal="circle" data-placeholder style="--ar: 4 / 5">
-                  <div class="piece__inner" data-parallax>
-                    <img
-                      src="/images/collection/nativity.webp"
-                      alt="Placeholder: walnut ornament engraved with a nativity scene under a star, resting on a walnut table."
-                      width="1200"
-                      height="1500"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
+            <li class="piece">
+              <div class="piece__media" data-reveal="circle">
+                <div class="piece__inner">
+                  <img src="/products/crosley-tower.webp" alt="Etched wooden ornament of Crosley Tower rising above a row of trees, with the words Crosley Tower beneath" width="1200" height="1200" loading="lazy" decoding="async" />
                 </div>
-                <div class="piece__caption">
-                  <h4>Nativity scene</h4>
-                  <p class="piece__price">$15</p>
-                  <p class="piece__meta">Ornament</p>
-                  <p class="piece__action">Pre-order</p>
-                </div>
-              </a>
+              </div>
+              <div class="piece__caption">
+                <h4>Crosley Tower</h4>
+                <p class="piece__price">Etched wooden ornament: <strong>$14.99</strong>, or 2 for <strong>$24.99</strong></p>
+                <a class="btn btn--small piece__buy" href="%STORE_URL%" target="_blank" rel="noopener noreferrer">Buy on our UC store<span class="visually-hidden"> (opens in a new tab)</span></a>
+              </div>
             </li>
-
-            <li class="piece piece--d">
-              <a class="piece__link" href="#order" data-pick="vinyl-record">
-                <div class="piece__media" data-reveal="circle" data-placeholder style="--ar: 5 / 4">
-                  <div class="piece__inner" data-parallax>
-                    <img
-                      src="/images/collection/vinyl-record.webp"
-                      alt="Placeholder: walnut ornament engraved as a vinyl record, with a name on the label."
-                      width="1500"
-                      height="1200"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
+            <li class="piece">
+              <div class="piece__media" data-reveal="circle">
+                <div class="piece__inner">
+                  <img src="/products/cats-by-90.webp" alt="Etched wooden ornament reading Cats by 90 in varsity letters with claw marks, hanging among pine branches and string lights" width="1116" height="1120" loading="lazy" decoding="async" />
                 </div>
-                <div class="piece__caption">
-                  <h4>Vinyl record, with a name</h4>
-                  <p class="piece__price">$20</p>
-                  <p class="piece__meta">Custom ornament</p>
-                  <p class="piece__action">Pre-order</p>
-                </div>
-              </a>
+              </div>
+              <div class="piece__caption">
+                <h4>Cats by 90</h4>
+                <p class="piece__price">Etched wooden ornament: <strong>$14.99</strong>, or 2 for <strong>$24.99</strong></p>
+                <a class="btn btn--small piece__buy" href="%STORE_URL%" target="_blank" rel="noopener noreferrer">Buy on our UC store<span class="visually-hidden"> (opens in a new tab)</span></a>
+              </div>
             </li>
-
-            <li class="piece piece--e">
-              <a class="piece__link" href="#order" data-pick="worlds-best-mom">
-                <div class="piece__media" data-reveal="circle" data-placeholder style="--ar: 4 / 5">
-                  <div class="piece__inner" data-parallax>
-                    <img
-                      src="/images/collection/worlds-best-mom.webp"
-                      alt="Placeholder: walnut ornament engraved with World's Best Mom and a small heart, hanging by twine."
-                      width="1200"
-                      height="1500"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
+            <li class="piece">
+              <div class="piece__media" data-reveal="circle">
+                <div class="piece__inner">
+                  <img src="/products/dog-christmas-hat.webp" alt="Etched wooden ornament of a golden retriever wearing a Santa hat, surrounded by music notes, stars and snowflakes" width="1143" height="1143" loading="lazy" decoding="async" />
                 </div>
-                <div class="piece__caption">
-                  <h4>World's Best Mom</h4>
-                  <p class="piece__price">$15</p>
-                  <p class="piece__meta">Ornament</p>
-                  <p class="piece__action">Pre-order</p>
-                </div>
-              </a>
+              </div>
+              <div class="piece__caption">
+                <h4>Dog with Christmas Hat</h4>
+                <p class="piece__price">Etched wooden ornament: <strong>$14.99</strong>, or 2 for <strong>$24.99</strong></p>
+                <a class="btn btn--small piece__buy" href="%STORE_URL%" target="_blank" rel="noopener noreferrer">Buy on our UC store<span class="visually-hidden"> (opens in a new tab)</span></a>
+              </div>
             </li>
-
-            <li class="piece piece--f">
-              <a class="piece__link" href="#order" data-pick="worlds-best-dad">
-                <div class="piece__media" data-reveal="circle" data-placeholder style="--ar: 4 / 5">
-                  <div class="piece__inner" data-parallax>
-                    <img
-                      src="/images/collection/worlds-best-dad.webp"
-                      alt="Placeholder: walnut ornament engraved with World's Best Dad, resting on a walnut table."
-                      width="1200"
-                      height="1500"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
+            <li class="piece">
+              <div class="piece__media" data-reveal="circle">
+                <div class="piece__inner">
+                  <img src="/products/cat-christmas-hat.webp" alt="Etched wooden ornament of a tabby cat wearing a Santa hat, surrounded by music notes, stars and snowflakes" width="1143" height="1143" loading="lazy" decoding="async" />
                 </div>
-                <div class="piece__caption">
-                  <h4>World's Best Dad</h4>
-                  <p class="piece__price">$15</p>
-                  <p class="piece__meta">Ornament</p>
-                  <p class="piece__action">Pre-order</p>
-                </div>
-              </a>
+              </div>
+              <div class="piece__caption">
+                <h4>Cat with Christmas Hat</h4>
+                <p class="piece__price">Etched wooden ornament: <strong>$14.99</strong>, or 2 for <strong>$24.99</strong></p>
+                <a class="btn btn--small piece__buy" href="%STORE_URL%" target="_blank" rel="noopener noreferrer">Buy on our UC store<span class="visually-hidden"> (opens in a new tab)</span></a>
+              </div>
             </li>
-
-            <li class="piece piece--g">
-              <a class="piece__link" href="#order" data-pick="life-is-better-with-pets">
-                <div class="piece__media" data-reveal="circle" data-placeholder style="--ar: 4 / 5">
-                  <div class="piece__inner" data-parallax>
-                    <img
-                      src="/images/collection/life-is-better-with-pets.webp"
-                      alt="Placeholder: walnut ornament engraved with Life is better with pets under a paw print, hanging by twine."
-                      width="1200"
-                      height="1500"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
+            <li class="piece">
+              <div class="piece__media" data-reveal="circle">
+                <div class="piece__inner">
+                  <img src="/products/worlds-best-mom.webp" alt="Etched wooden ornament reading World's Best Mom in flowing script, with hearts and leafy sprigs" width="1200" height="1200" loading="lazy" decoding="async" />
                 </div>
-                <div class="piece__caption">
-                  <h4>Life Is Better with Pets</h4>
-                  <p class="piece__price">$15</p>
-                  <p class="piece__meta">Ornament</p>
-                  <p class="piece__action">Pre-order</p>
-                </div>
-              </a>
+              </div>
+              <div class="piece__caption">
+                <h4>World's Best Mom</h4>
+                <p class="piece__price">Etched wooden ornament: <strong>$14.99</strong>, or 2 for <strong>$24.99</strong></p>
+                <a class="btn btn--small piece__buy" href="%STORE_URL%" target="_blank" rel="noopener noreferrer">Buy on our UC store<span class="visually-hidden"> (opens in a new tab)</span></a>
+              </div>
             </li>
-          </ul>
-        </div>
-
-        <div class="group">
-          <div class="group__head" data-rule>
-            <h3>Coasters</h3>
-            <p>$12 each, 3 for $30, or 4 for $38.</p>
-          </div>
-
-          <ul class="pieces pieces--coasters" role="list">
-            <li class="piece piece--h">
-              <a class="piece__link" href="#order" data-pick="mountain-coaster">
-                <div class="piece__media" data-reveal="circle" data-placeholder style="--ar: 3 / 2">
-                  <div class="piece__inner" data-parallax>
-                    <img
-                      src="/images/collection/mountain-coaster.webp"
-                      alt="Placeholder: two walnut coasters on a walnut table, the top one engraved with a mountain range and pine trees."
-                      width="1500"
-                      height="1000"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
+            <li class="piece">
+              <div class="piece__media" data-reveal="circle">
+                <div class="piece__inner">
+                  <img src="/products/worlds-best-dad.webp" alt="Etched wooden ornament reading World's Best Dad in flowing script, with stars and leafy sprigs" width="1200" height="1200" loading="lazy" decoding="async" />
                 </div>
-                <div class="piece__caption">
-                  <h4>Mountain</h4>
-                  <p class="piece__price">$12</p>
-                  <p class="piece__meta">Coaster</p>
-                  <p class="piece__action">Pre-order</p>
-                </div>
-              </a>
-            </li>
-
-            <li class="piece piece--i">
-              <a class="piece__link" href="#order" data-pick="botanical-coaster">
-                <div class="piece__media" data-reveal="circle" data-placeholder style="--ar: 4 / 5">
-                  <div class="piece__inner" data-parallax>
-                    <img
-                      src="/images/collection/botanical-coaster.webp"
-                      alt="Placeholder: two stacked walnut coasters, the top one engraved with a leafy sprig."
-                      width="1200"
-                      height="1500"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
-                </div>
-                <div class="piece__caption">
-                  <h4>Botanical</h4>
-                  <p class="piece__price">$12</p>
-                  <p class="piece__meta">Coaster</p>
-                  <p class="piece__action">Pre-order</p>
-                </div>
-              </a>
+              </div>
+              <div class="piece__caption">
+                <h4>World's Best Dad</h4>
+                <p class="piece__price">Etched wooden ornament: <strong>$14.99</strong>, or 2 for <strong>$24.99</strong></p>
+                <a class="btn btn--small piece__buy" href="%STORE_URL%" target="_blank" rel="noopener noreferrer">Buy on our UC store<span class="visually-hidden"> (opens in a new tab)</span></a>
+              </div>
             </li>
           </ul>
         </div>
@@ -371,14 +253,14 @@
       <section class="custom section" id="custom" aria-labelledby="custom-title">
         <div class="custom__intro">
           <h2 id="custom-title" data-split>Add a name, a date, a quote, or your pet.</h2>
-          <p data-fade>Custom ornaments are $20 each, or 2 for $35.</p>
+          <p data-fade>Custom etched ornament: $19.99, or 2 for $34.99.</p>
 
           <ol class="steps" role="list">
             <li class="steps__item" data-step>
               <span class="steps__n" aria-hidden="true">1</span>
               <div>
                 <h3>Tell us what to engrave</h3>
-                <p>A name, a date, a short quote, or your pet. Write it in the pre-order form.</p>
+                <p>A name, a date, a short quote, or your pet.</p>
               </div>
             </li>
             <li class="steps__item" data-step>
@@ -434,7 +316,7 @@
               <button class="chip" type="button" data-sample="Home sweet home">A quote</button>
               <button class="chip" type="button" data-sample="Good dog, Biscuit">A pet</button>
             </div>
-            <a class="btn" href="#order" data-engraver-order>Pre-order this piece</a>
+            <a class="btn" href="%STORE_URL%" target="_blank" rel="noopener noreferrer">Buy on our UC store<span class="visually-hidden"> (opens in a new tab)</span></a>
           </div>
         </div>
       </section>
@@ -486,33 +368,22 @@
         <ul class="price-list" role="list">
           <li class="price-row" data-price-row>
             <div class="price-row__what">
-              <h3>General ornament</h3>
+              <h3>Etched wooden ornament</h3>
               <p>Any ready-made design from the collection.</p>
             </div>
             <ul class="price-row__tiers" role="list">
-              <li><strong>$15</strong> each</li>
-              <li>2 for <strong>$25</strong></li>
+              <li><strong>$14.99</strong> each</li>
+              <li>2 for <strong>$24.99</strong></li>
             </ul>
           </li>
           <li class="price-row" data-price-row>
             <div class="price-row__what">
-              <h3>Custom ornament</h3>
+              <h3>Custom etched ornament</h3>
               <p>Your name, date, quote, or pet.</p>
             </div>
             <ul class="price-row__tiers" role="list">
-              <li><strong>$20</strong> each</li>
-              <li>2 for <strong>$35</strong></li>
-            </ul>
-          </li>
-          <li class="price-row" data-price-row>
-            <div class="price-row__what">
-              <h3>Coaster</h3>
-              <p>Mountain or botanical.</p>
-            </div>
-            <ul class="price-row__tiers" role="list">
-              <li><strong>$12</strong> each</li>
-              <li>3 for <strong>$30</strong></li>
-              <li>4 for <strong>$38</strong></li>
+              <li><strong>$19.99</strong> each</li>
+              <li>2 for <strong>$34.99</strong></li>
             </ul>
           </li>
         </ul>
@@ -541,7 +412,7 @@
             every piece ourselves at UC's 1819 Innovation Hub.
           </p>
           <p data-fade>
-            Because each one begins as a real branch, your ornament or coaster carries its own rings, its own color,
+            Because each one begins as a real branch, your ornament carries its own rings, its own color,
             and its own edge of bark.
           </p>
         </div>
@@ -577,134 +448,28 @@
         </ul>
       </section>
 
-      <!-- ============ ORDER ============ -->
-      <section class="order" id="order" aria-labelledby="order-title">
-        <div class="order__inner" data-order-inner>
-          <div class="order__intro">
-            <h2 id="order-title">Pre-order yours</h2>
-            <p>Tell us what you'd like. We make it, then hand it over on campus at UC.</p>
-            <dl class="order__facts">
-              <div>
-                <dt>Pickup</dt>
-                <dd>On campus at the University of Cincinnati</dd>
-              </div>
-              <div>
-                <dt>Made at</dt>
-                <dd>1819 Innovation Hub</dd>
-              </div>
-            </dl>
+      <!-- ============ HOW TO BUY ============ -->
+      <section class="buy" id="how-to-buy" aria-labelledby="buy-title">
+        <div class="buy__inner" data-buy-inner>
+          <h2 class="buy__title" id="buy-title">How to buy</h2>
+
+          <div class="buy__body">
+            <ol class="steps buy__steps" role="list">
+              <li class="steps__item">
+                <span class="steps__n" aria-hidden="true">1</span>
+                <h3>Click &ldquo;Buy on our UC store&rdquo;</h3>
+              </li>
+              <li class="steps__item">
+                <span class="steps__n" aria-hidden="true">2</span>
+                <h3>Choose your design and check out</h3>
+              </li>
+              <li class="steps__item">
+                <span class="steps__n" aria-hidden="true">3</span>
+                <h3>Pick up on campus</h3>
+              </li>
+            </ol>
+            <a class="btn btn--amber" href="%STORE_URL%" target="_blank" rel="noopener noreferrer">Buy on our UC store<span class="visually-hidden"> (opens in a new tab)</span></a>
           </div>
-
-          <!--
-            This form is not connected to anything yet. Put your form endpoint
-            (Formspree, Basin, your own API) in data-endpoint and it will POST
-            the fields there as JSON-accepting form data.
-          -->
-          <form class="order-form" novalidate data-order-form data-endpoint="">
-            <div class="form-row">
-              <div class="form-field">
-                <label class="label" for="f-name">Name</label>
-                <input class="field" id="f-name" name="name" type="text" autocomplete="name" required />
-                <p class="error" id="f-name-error" hidden></p>
-              </div>
-              <div class="form-field">
-                <label class="label" for="f-email">Email</label>
-                <input
-                  class="field"
-                  id="f-email"
-                  name="email"
-                  type="email"
-                  autocomplete="email"
-                  inputmode="email"
-                  required
-                />
-                <p class="error" id="f-email-error" hidden></p>
-              </div>
-            </div>
-
-            <div class="form-row form-row--design">
-              <div class="form-field">
-                <label class="label" for="f-design">Design</label>
-                <select class="field" id="f-design" name="design" required>
-                  <option value="" selected disabled>Choose a design</option>
-                  <optgroup label="Ornaments, $15">
-                    <option value="peace-on-earth" data-kind="ornament">Peace on Earth</option>
-                    <option value="merry-christmas" data-kind="ornament">Merry Christmas</option>
-                    <option value="nativity" data-kind="ornament">Nativity scene</option>
-                    <option value="worlds-best-mom" data-kind="ornament">World's Best Mom</option>
-                    <option value="worlds-best-dad" data-kind="ornament">World's Best Dad</option>
-                    <option value="life-is-better-with-pets" data-kind="ornament">Life Is Better with Pets</option>
-                  </optgroup>
-                  <optgroup label="Custom ornaments, $20">
-                    <option value="vinyl-record" data-kind="custom">Vinyl record, with a name</option>
-                    <option value="custom-ornament" data-kind="custom">Custom: a name, date, quote, or pet</option>
-                  </optgroup>
-                  <optgroup label="Coasters, $12">
-                    <option value="mountain-coaster" data-kind="coaster">Mountain</option>
-                    <option value="botanical-coaster" data-kind="coaster">Botanical</option>
-                  </optgroup>
-                </select>
-                <p class="error" id="f-design-error" hidden></p>
-              </div>
-
-              <div class="form-field form-field--qty">
-                <label class="label" for="f-qty">Quantity</label>
-                <div class="stepper">
-                  <button class="stepper__btn" type="button" aria-label="One fewer" data-qty="-1">
-                    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10" /></svg>
-                  </button>
-                  <input
-                    class="field stepper__input"
-                    id="f-qty"
-                    name="quantity"
-                    type="number"
-                    inputmode="numeric"
-                    min="1"
-                    max="24"
-                    step="1"
-                    value="1"
-                    required
-                  />
-                  <button class="stepper__btn" type="button" aria-label="One more" data-qty="1">
-                    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8 3v10" /></svg>
-                  </button>
-                </div>
-                <p class="error" id="f-qty-error" hidden></p>
-              </div>
-            </div>
-
-            <div class="form-field">
-              <label class="label" for="f-custom">Custom text <span class="label__opt" data-custom-opt>optional</span></label>
-              <input
-                class="field"
-                id="f-custom"
-                name="custom_text"
-                type="text"
-                maxlength="80"
-                autocomplete="off"
-                aria-describedby="f-custom-hint"
-              />
-              <p class="hint" id="f-custom-hint">
-                A name, a date, a short quote, or your pet's name. Leave it empty for ready-made designs.
-              </p>
-              <p class="error" id="f-custom-error" hidden></p>
-            </div>
-
-            <div class="form-field">
-              <label class="label" for="f-notes">Notes <span class="label__opt">optional</span></label>
-              <textarea class="field" id="f-notes" name="notes" rows="3"></textarea>
-            </div>
-
-            <div class="order-form__foot">
-              <p class="total">
-                <span class="total__label">Estimated total</span>
-                <output class="total__value" for="f-design f-qty" data-total>Choose a design</output>
-              </p>
-              <button class="btn btn--amber" type="submit">Send pre-order</button>
-            </div>
-
-            <p class="form-status" role="status" aria-live="polite" data-form-status></p>
-          </form>
         </div>
       </section>
     </main>
@@ -727,7 +492,7 @@
             <li><a href="#collection">Collection</a></li>
             <li><a href="#custom">Custom</a></li>
             <li><a href="#pricing">Pricing</a></li>
-            <li><a href="#order">Pre-order</a></li>
+            <li><a href="%STORE_URL%" target="_blank" rel="noopener noreferrer">Buy on our UC store<span class="visually-hidden"> (opens in a new tab)</span></a></li>
           </ul>
         </nav>
         <p class="site-footer__fine">

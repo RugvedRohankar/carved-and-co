@@ -321,12 +321,6 @@
     font-size: 0.9375rem;
   }
 
-  .label__opt {
-    margin-left: 6px;
-    color: var(--heartwood);
-    font-weight: 400;
-  }
-
   .field {
     display: block;
     width: 100%;
@@ -355,35 +349,10 @@
     outline-offset: 2px;
   }
 
-  .field[aria-invalid='true'] {
-    border-color: var(--error);
-    box-shadow: inset 0 0 0 1px var(--error);
-  }
-
-  textarea.field {
-    resize: vertical;
-  }
-
-  select.field {
-    appearance: none;
-    padding-right: 44px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 6l5 5 5-5' fill='none' stroke='%2320140c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 14px center;
-    background-size: 16px;
-  }
-
   .hint {
     margin-top: 8px;
     color: var(--heartwood);
     font-size: var(--step--1);
-  }
-
-  .error {
-    margin-top: 8px;
-    color: var(--error);
-    font-size: var(--step--1);
-    font-weight: 550;
   }
 
   .chips {
@@ -519,6 +488,13 @@
     cursor: pointer;
   }
 
+  /* On narrow phones the store link lives in the menu instead. */
+  @media (max-width: 479px) {
+    .site-header__buy {
+      display: none;
+    }
+  }
+
   @media (max-width: 899px) {
     .site-header {
       gap: 12px;
@@ -598,7 +574,21 @@
   .hero__stage {
     --d: min(66cqw, 62cqh);
     --disc-y: 60%;
+    /* Where the ornament sits inside the hero photo, as fractions of the
+       photo's width: the round face's diameter and centre, and where the
+       twine leaves the top edge. The face is drawn at --d, centred on
+       --disc-y. Update these if the photo is replaced. */
+    --photo-face: 0.766;
+    --photo-x: 0.496;
+    --photo-y: 0.521;
+    --photo-twine-x: 0.495;
+    --photo-twine-w: 0.053;
+    --photo-w: calc(var(--d) / var(--photo-face));
     position: relative;
+    /* The stage is its own layer (it is a size container), so it blends as a
+       whole: the photo's white backdrop takes on the page colour while the
+       wood and twine, which are darker, keep their own. */
+    mix-blend-mode: darken;
     height: clamp(310px, 50svh, 480px);
     margin-inline: calc(var(--gutter) * -1);
     container-type: size;
@@ -609,26 +599,51 @@
     inset: 0;
   }
 
-  .hero__disc {
+  .hero__photo {
     position: absolute;
-    left: 50%;
-    top: var(--disc-y);
-    width: var(--d);
-    height: var(--d);
-    border-radius: 50%;
-    object-fit: cover;
-    translate: -50% -50%;
-    box-shadow: 14px 24px 40px rgb(32 20 12 / 0.28);
+    left: calc(50% - var(--photo-w) * var(--photo-x));
+    top: calc(var(--disc-y) - var(--photo-w) * var(--photo-y));
+    width: var(--photo-w);
+    height: var(--photo-w);
+    max-width: none;
   }
 
+  /* The ornament's soft shadow on the wall behind it, as in the WebGL view:
+     offset down and right, kept off the ornament itself (face and hanging
+     tab), and faded out before the photo's edges. */
+  .hero__shadow {
+    position: absolute;
+    left: calc(50% - var(--photo-w) * var(--photo-x));
+    top: calc(var(--disc-y) - var(--photo-w) * var(--photo-y));
+    width: var(--photo-w);
+    height: var(--photo-w);
+    background: radial-gradient(
+      ellipse calc(var(--photo-face) * 72.5%) calc(var(--photo-face) * 72.5%) at
+        calc((var(--photo-x) + var(--photo-face) * 0.06) * 100%) calc((var(--photo-y) + var(--photo-face) * 0.085) * 100%),
+      rgb(32 18 8 / 0.3) 48%,
+      rgb(32 18 8 / 0) 100%
+    );
+    mask:
+      radial-gradient(
+        ellipse calc(var(--photo-face) * 50%) calc(var(--photo-face) * 50%) at calc(var(--photo-x) * 100%)
+          calc(var(--photo-y) * 100%),
+        transparent 99%,
+        #000 100%
+      ),
+      radial-gradient(ellipse 7% 7% at calc(var(--photo-twine-x) * 100%) 9%, transparent 99%, #000 100%),
+      radial-gradient(ellipse 50% 50% at 50% 50%, #000 82%, transparent 98%);
+    mask-composite: intersect;
+    mix-blend-mode: multiply;
+  }
+
+  /* Continues the photo's twine up to the top of the page. */
   .hero__twine {
     position: absolute;
-    left: 50%;
+    left: calc(50% + (var(--photo-twine-x) - var(--photo-x)) * var(--photo-w));
     top: 0;
-    width: 3px;
-    height: calc(var(--disc-y) - var(--d) * 0.39);
-    border-radius: 2px;
-    background: #b99a68;
+    width: calc(var(--photo-w) * var(--photo-twine-w));
+    height: calc(var(--disc-y) - var(--photo-w) * var(--photo-y) + 2px);
+    background: linear-gradient(90deg, #b4906b 0 44%, transparent 44% 56%, #b4906b 56%);
     translate: -50% 0;
   }
 
@@ -641,11 +656,6 @@
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.5s ease;
-  }
-
-  .hero__stage[data-placeholder]::after {
-    left: var(--gutter);
-    bottom: 0;
   }
 
   .hero__copy {
@@ -691,12 +701,6 @@
       margin-inline: 0;
     }
 
-    .hero__stage[data-placeholder]::after {
-      left: 50%;
-      bottom: 6%;
-      translate: -50% 0;
-    }
-
     .hero__copy {
       grid-column: 1 / span 6;
       grid-row: 1;
@@ -715,10 +719,6 @@
 
   .section-head p {
     color: var(--heartwood);
-  }
-
-  .group + .group {
-    margin-top: clamp(80px, 10vw, 152px);
   }
 
   .group__head {
@@ -748,19 +748,18 @@
     color: var(--heartwood);
   }
 
+  /* Products: an even grid of square cards. Photos are shown whole
+     (contain), and every card's button sits on the same line as its row. */
   .pieces {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 40px 16px;
-    align-items: start;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 56px var(--col-gap);
+    align-items: stretch;
   }
 
-  .piece--a,
-  .piece--d,
-  .piece--g,
-  .piece--h,
-  .piece--i {
-    grid-column: 1 / -1;
+  .piece {
+    display: flex;
+    flex-direction: column;
   }
 
   @media (max-width: 599px) {
@@ -769,36 +768,17 @@
     }
   }
 
-  /* On phones the paired tiles share one ratio so their captions line up. */
-  .piece--b .piece__media {
-    --ar-m: 4 / 5;
-  }
-
-  .piece--i .piece__media {
-    --ar-m: 1 / 1;
-  }
-
-  .piece__link {
-    display: block;
-    border-radius: var(--radius);
-    text-decoration: none;
-  }
-
-  .piece__link:focus-visible {
-    outline-offset: 6px;
-  }
-
   .piece__media {
     position: relative;
-    aspect-ratio: var(--ar-m, var(--ar, 4 / 5));
+    aspect-ratio: 1;
     overflow: hidden;
     border-radius: var(--radius);
-    background: var(--sapwood);
+    background: var(--frame-bg, #fbf9f5);
   }
 
   .piece__inner {
     position: absolute;
-    inset: -7% 0;
+    inset: 0;
   }
 
   .piece__inner img,
@@ -807,7 +787,7 @@
     inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
   }
 
   .piece__inner canvas {
@@ -820,44 +800,35 @@
   }
 
   .piece__caption {
+    flex: 1;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 2px 16px;
-    align-items: baseline;
+    grid-template-rows: auto auto 1fr;
+    gap: 6px;
     margin-top: 14px;
   }
 
-  .piece__caption h4 {
-    text-decoration: underline;
-    text-decoration-color: transparent;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 5px;
-    transition: text-decoration-color 0.25s ease;
-  }
-
-  .piece__link:hover h4 {
-    text-decoration-color: var(--amber-ink);
-  }
-
   .piece__price {
-    font-variant-numeric: lining-nums tabular-nums;
-    font-family: var(--font-display);
-    font-size: var(--step-1);
-    line-height: 1.2;
-  }
-
-  .piece__meta {
     color: var(--heartwood);
     font-size: var(--step--1);
+    font-variant-numeric: lining-nums tabular-nums;
+    line-height: 1.5;
   }
 
-  .piece__action {
-    color: var(--amber-ink);
-    font-size: var(--step--1);
+  .piece__price strong {
+    color: var(--bark);
     font-weight: 600;
-    text-decoration: underline;
-    text-decoration-thickness: 1.5px;
-    text-underline-offset: 4px;
+  }
+
+  .piece__buy {
+    justify-self: start;
+    align-self: end;
+    margin-top: 16px;
+  }
+
+  @media (min-width: 560px) {
+    .pieces {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
   @media (min-width: 900px) {
@@ -876,53 +847,8 @@
     }
 
     .pieces {
-      grid-template-columns: repeat(12, minmax(0, 1fr));
-      column-gap: var(--col-gap);
-      row-gap: clamp(64px, 8vw, 128px);
-    }
-
-    .piece .piece__media {
-      --ar-m: initial;
-    }
-
-    .piece--a {
-      grid-column: 1 / span 6;
-    }
-
-    .piece--b {
-      grid-column: 8 / span 5;
-      margin-top: 36%;
-    }
-
-    .piece--c {
-      grid-column: 2 / span 4;
-    }
-
-    .piece--d {
-      grid-column: 7 / span 6;
-      margin-top: 14%;
-    }
-
-    .piece--e {
-      grid-column: 1 / span 4;
-    }
-
-    .piece--f {
-      grid-column: 5 / span 4;
-      margin-top: 14%;
-    }
-
-    .piece--g {
-      grid-column: 9 / span 4;
-    }
-
-    .piece--h {
-      grid-column: 1 / span 7;
-    }
-
-    .piece--i {
-      grid-column: 9 / span 4;
-      margin-top: 12%;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      row-gap: 80px;
     }
   }
 
@@ -1394,175 +1320,45 @@
     }
   }
 
-  /* Order */
-  .order__inner {
+  /* How to buy */
+  .buy__inner {
     --focus: var(--amber);
     display: grid;
-    gap: 48px;
+    gap: 40px;
     padding: var(--section) var(--pad-inline);
     background: var(--walnut);
     color: var(--ivory);
   }
 
-  .order__intro > p {
-    margin-top: 20px;
-    color: var(--sand);
-    font-size: 1.125rem;
+  .buy__steps {
+    margin-top: 0;
   }
 
-  .order__facts {
-    display: grid;
-    gap: 20px;
+  .buy__steps .steps__item {
+    align-items: center;
+  }
+
+  .buy__steps .steps__n {
+    border-color: var(--amber);
+    color: var(--amber);
+  }
+
+  .buy__body .btn {
     margin-top: 40px;
   }
 
-  .order__facts dt {
-    color: var(--amber);
-    font-size: var(--step--1);
-    font-weight: 550;
-  }
-
-  .order__facts dd {
-    margin-top: 2px;
-    font-family: var(--font-display);
-    font-size: var(--step-1);
-    line-height: 1.25;
-  }
-
-  .order-form {
-    --focus: var(--bark);
-    display: grid;
-    gap: 24px;
-    padding: clamp(22px, 4vw, 48px);
-    border-radius: 10px;
-    background: var(--ivory);
-    color: var(--bark);
-  }
-
-  .form-row {
-    display: grid;
-    gap: 24px;
-  }
-
-  .stepper {
-    display: grid;
-    grid-template-columns: 52px 76px 52px;
-    gap: 6px;
-  }
-
-  .stepper__btn {
-    display: grid;
-    place-items: center;
-    min-height: 52px;
-    border: 1px solid var(--field-border);
-    border-radius: 6px;
-    background: transparent;
-    cursor: pointer;
-    transition:
-      background-color 0.2s ease,
-      border-color 0.2s ease;
-  }
-
-  .stepper__btn:hover:not(:disabled) {
-    border-color: var(--bark);
-    background: var(--cream);
-  }
-
-  .stepper__btn:disabled {
-    border-color: var(--sand);
-    color: var(--field-border);
-    cursor: not-allowed;
-  }
-
-  .stepper__btn svg {
-    width: 16px;
-    height: 16px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.6;
-    stroke-linecap: round;
-  }
-
-  .stepper__input {
-    padding-inline: 6px;
-    text-align: center;
-    appearance: textfield;
-  }
-
-  .stepper__input::-webkit-outer-spin-button,
-  .stepper__input::-webkit-inner-spin-button {
-    margin: 0;
-    appearance: none;
-  }
-
-  .order-form__foot {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px 32px;
-    padding-top: 24px;
-    border-top: 1px solid var(--rule);
-  }
-
-  .total {
-    display: grid;
-    gap: 2px;
-  }
-
-  .total__label {
-    color: var(--heartwood);
-    font-size: var(--step--1);
-  }
-
-  .total__value {
-    font-family: var(--font-display);
-    font-size: var(--step-2);
-    line-height: 1.1;
-    letter-spacing: -0.01em;
-  }
-
-  .form-status:empty {
-    display: none;
-  }
-
-  .form-status {
-    max-width: none;
-    padding: 14px 16px;
-    border-radius: 6px;
-    background: var(--sapwood);
-    font-weight: 550;
-  }
-
-  .form-status[data-state='error'] {
-    background: color-mix(in srgb, var(--error) 12%, var(--ivory));
-    color: var(--error);
-  }
-
-  @media (min-width: 640px) {
-    .form-row {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .form-row--design {
-      grid-template-columns: minmax(0, 1fr) auto;
-    }
-  }
-
   @media (min-width: 900px) {
-    .order__inner {
+    .buy__inner {
       grid-template-columns: repeat(12, minmax(0, 1fr));
       column-gap: var(--col-gap);
       align-items: start;
     }
 
-    .order__intro {
-      position: sticky;
-      top: calc(var(--header-h) + 40px);
+    .buy__title {
       grid-column: 1 / span 4;
     }
 
-    .order-form {
+    .buy__body {
       grid-column: 6 / -1;
     }
   }

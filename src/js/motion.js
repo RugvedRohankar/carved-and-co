@@ -102,7 +102,7 @@ function hero(lenis) {
         createHeroOrnament({
           stage,
           canvas: $('[data-hero-canvas]', el),
-          disc: $('[data-hero-disc]', el),
+          photo: $('[data-hero-photo]', el),
           lenis,
         }),
       )
@@ -380,7 +380,7 @@ function process() {
   };
 }
 
-/* ------------------------------------------------------ pricing, order, end */
+/* --------------------------------------------- pricing, how to buy, end */
 
 function rules() {
   $$('[data-rule]').forEach((head) => {
@@ -400,15 +400,15 @@ function pricing() {
   });
 }
 
-function order() {
+function howToBuy() {
   // The walnut panel opens from a circle at its top edge as you arrive.
   gsap.fromTo(
-    '[data-order-inner]',
+    '[data-buy-inner]',
     { clipPath: 'circle(6% at 50% 0%)' },
     {
       clipPath: 'circle(150% at 50% 0%)',
       ease: 'power1.in',
-      scrollTrigger: { trigger: '.order', start: 'top bottom', end: 'top 15%', scrub: true },
+      scrollTrigger: { trigger: '.buy', start: 'top bottom', end: 'top 15%', scrub: true },
     },
   );
 }
@@ -447,7 +447,7 @@ export function initMotion() {
       custom(),
       process(),
       pricing(),
-      order(),
+      howToBuy(),
       footer(),
     ];
 

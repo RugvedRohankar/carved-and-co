@@ -3,7 +3,7 @@
 // One shared WebGL canvas moves to whichever tile is hovered, so the cost is a
 // single small context no matter how many tiles there are.
 
-import { LinearFilter, Mesh, OrthographicCamera, PlaneGeometry, Scene, ShaderMaterial, Texture, Vector2, WebGLRenderer } from 'three';
+import { LinearFilter, Mesh, OrthographicCamera, PlaneGeometry, Scene, ShaderMaterial, Texture, Vector2, Vector3, WebGLRenderer } from 'three';
 
 const vertexShader = /* glsl */ `
   varying vec2 vUv;
@@ -21,13 +21,16 @@ const fragmentShader = /* glsl */ `
   uniform float uHover;
   uniform float uTime;
   uniform float uSheen;
+  uniform vec3 uBg;
+  uniform float uContain;
   varying vec2 vUv;
 
-  // Same crop as CSS object-fit: cover.
-  vec2 cover(vec2 uv) {
+  // Same fit as the photo's CSS object-fit (cover or contain). With contain,
+  // anything outside the photo shows the frame colour.
+  vec2 fit(vec2 uv) {
     float box = uRes.x / uRes.y;
     float img = uImg.x / uImg.y;
-    vec2 scale = box < img ? vec2(box / img, 1.0) : vec2(1.0, img / box);
+    vec2 scale = (uContain > 0.5) == (box > img) ? vec2(box / img, 1.0) : vec2(1.0, img / box);
     return (uv - 0.5) * scale + 0.5;
   }
 
@@ -41,7 +44,9 @@ const fragmentShader = /* glsl */ `
     uv -= (uv - uMouse) * lens * 0.05;
     uv += 0.0022 * uHover * vec2(sin(uv.y * 17.0 + uTime * 1.5), cos(uv.x * 15.0 + uTime * 1.2));
 
-    vec3 color = texture2D(uTex, cover(uv)).rgb;
+    vec2 st = fit(uv);
+    bool inside = all(greaterThanEqual(st, vec2(0.0))) && all(lessThanEqual(st, vec2(1.0)));
+    vec3 color = inside ? texture2D(uTex, st).rgb : uBg;
 
     float band = (vUv.x + (1.0 - vUv.y) * 0.55) - uSheen;
     color += exp(-band * band * 34.0) * 0.17 * vec3(1.0, 0.93, 0.8);
@@ -65,6 +70,8 @@ export function createHoverSheen(tiles) {
     uHover: { value: 0 },
     uTime: { value: 0 },
     uSheen: { value: -0.7 },
+    uBg: { value: new Vector3(1, 1, 1) },
+    uContain: { value: 0 },
   };
   const material = new ShaderMaterial({ uniforms, vertexShader, fragmentShader });
   const geometry = new PlaneGeometry(2, 2);
@@ -121,6 +128,9 @@ export function createHoverSheen(tiles) {
     renderer.setSize(inner.clientWidth, inner.clientHeight, false);
     uniforms.uRes.value.set(inner.clientWidth, inner.clientHeight);
     uniforms.uImg.value.set(img.naturalWidth, img.naturalHeight);
+    const [r, g, b] = getComputedStyle(inner.parentElement).backgroundColor.match(/[\d.]+/g).map(Number);
+    uniforms.uBg.value.set(r / 255, g / 255, b / 255);
+    uniforms.uContain.value = getComputedStyle(img).objectFit === 'contain' ? 1 : 0;
     uniforms.uTex.value = textureFor(img);
     uniforms.uSheen.value = -0.7;
     track(inner, event);

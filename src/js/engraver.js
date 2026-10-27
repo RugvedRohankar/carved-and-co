@@ -23,7 +23,7 @@ function toLines(text) {
   return [words.slice(0, best).join(' '), words.slice(best).join(' ')];
 }
 
-export function initEngraver(order) {
+export function initEngraver() {
   const root = document.querySelector('[data-engraver]');
   if (!root) return;
 
@@ -72,10 +72,6 @@ export function initEngraver(order) {
       chips.forEach((other) => other.setAttribute('aria-pressed', String(other === chip)));
       draw();
     });
-  });
-
-  root.querySelector('[data-engraver-order]').addEventListener('click', () => {
-    order.prefill({ design: 'custom-ornament', customText: input.value.trim() });
   });
 
   draw();

@@ -6,7 +6,6 @@ import './styles/main.css';
 
 import processScene from './process-scene.svg?raw';
 import { initNav } from './js/nav.js';
-import { initOrderForm } from './js/order-form.js';
 import { initEngraver } from './js/engraver.js';
 import { initMotion } from './js/motion.js';
 
@@ -14,13 +13,7 @@ import { initMotion } from './js/motion.js';
 // sitting in the HTML. Its box is reserved in CSS, so nothing shifts.
 document.querySelector('[data-process-visual]').innerHTML = processScene;
 
-const order = initOrderForm();
-initEngraver(order);
-
-// Choosing a piece in the collection carries that design into the order form.
-document.querySelectorAll('[data-pick]').forEach((link) => {
-  link.addEventListener('click', () => order.prefill({ design: link.dataset.pick }));
-});
+initEngraver();
 
 const motion = initMotion();
 initNav(motion);
